@@ -679,7 +679,8 @@ class RADTTS(torch.nn.Module):
         return {'mel': mel,
                 'dur': dur,
                 'f0': f0,
-                'energy_avg': energy_avg
+                'energy_avg': energy_avg,
+                'voiced_mask': voiced_mask
                 }
 
     def infer_f0(self, residual, txt_enc_time_expanded, spk_vec,
