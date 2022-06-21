@@ -146,11 +146,9 @@ def infer(radtts_path, vocoder_path, vocoder_config_path, text_path, speaker,
                         data_config['sampling_rate'], audio_denoised)
 
             if plot:
-                fig, axes = plt.subplots(4, 1, figsize=(10, 6))
+                fig, axes = plt.subplots(2, 1, figsize=(10, 6))
                 axes[0].plot(outputs['f0'].cpu().numpy()[0], label='f0')
-                axes[1].plot(outputs['f0_masked'].cpu().numpy()[0], label='f0_masked')
-                axes[2].plot(outputs['energy_avg'].cpu().numpy()[0], label='energy_avg')
-                axes[3].plot(outputs['p_voiced'].cpu().numpy()[0], label='p_voiced')
+                axes[1].plot(outputs['energy_avg'].cpu().numpy()[0], label='energy_avg')
                 for ax in axes:
                     ax.legend(loc='best')
                 plt.tight_layout()
@@ -180,7 +178,7 @@ if __name__ == "__main__":
     parser.add_argument("--energy_mean", default=0.0, type=float)
     parser.add_argument("--energy_std", default=0.0, type=float)
     parser.add_argument("--token_dur_scaling", default=1.00, type=float)
-    parser.add_argument("--n_takes", default=10, type=int)
+    parser.add_argument("--n_takes", default=1, type=int)
     parser.add_argument("--use_amp", action="store_true")
     parser.add_argument("--plot", action="store_true")
     parser.add_argument("--seed", default=1234, type=int)
