@@ -268,7 +268,7 @@ if __name__ == "__main__":
     parser.add_argument('-k', '--vocoder_config_path', type=str, help='vocoder JSON file config')
     parser.add_argument('-p', '--params', nargs='+', default=[])
     parser.add_argument('-n', '--n_samples', default=5, type=int)
-    parser.add_argument("-s", "--sigma", default=0.5, type=float)
+    parser.add_argument("-s", "--sigma", default=0.8, type=float)
     parser.add_argument("--sigma_f0", default=1.0, type=float)
     parser.add_argument("--sigma_energy", default=1.0, type=float)
     parser.add_argument("--f0_mean", default=0.0, type=float)
