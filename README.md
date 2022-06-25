@@ -1,5 +1,5 @@
 # Flow-based TTS with Robust Alignment Learning, Diverse Synthesis, and Generative Modelling and Fine-Grained Control over of Low Dimensional (F0 and Energy) Speech Attributes.
-This repository contains the source code and several checkpoints for our work based on our RADTTS model. RADTTS is a normalizing-flow-based TTS framework with high acoustic fidelity and a highly robust audio-transcription alignment module. Our project page and some samples can be found [here](https://nv-adlr.github.io/RADTTS), with relevant works listed [here](#relevant-papers).
+This repository contains the source code and several checkpoints for our work based on RADTTS. RADTTS is a normalizing-flow-based TTS framework with state of the art acoustic fidelity and a highly robust audio-transcription alignment module. Our project page and some samples can be found [here](https://nv-adlr.github.io/RADTTS), with relevant works listed [here](#relevant-papers).
 
 This repository can be used to train the following models:
 
@@ -8,14 +8,20 @@ This repository can be used to train the following models:
 - Normalizing flow models for explicitly modeling text-conditional phoneme duration, fundamental frequency (F0), and energy
 - A standalone alignment module for learning unspervised text-audio alignments necessary for TTS training
 
-We provide a link to a pre-trained HiFi-GAN model to perform vocoding.
+## HiFi-GAN vocoder pre-trained models
+We provide a [checkpoint](https://drive.google.com/file/d/1lD62jl5hF6T5AkGoWKOcgMZuMR4Ir76d/view?usp=sharing) and [config](https://drive.google.com/file/d/1WRtyvkmQxlYShkeTwWmlj7_WiS70R7Jb/view?usp=sharing) for a HiFi-GAN vocoder trained on LibriTTS 100 and 360.<br>
+For a HiFi-GAN vocoder trained on LJS, please download the v1 model provided by the HiFi-GAN authors [here](https://github.com/jik876/hifi-gan), .
+
+## RADTTS pre-trained models
+[RADTTS++DAP-LJS](https://drive.google.com/file/d/1Rb2VMUwQahGrnpFSlAhCPh7OpDN3xgOr/view?usp=sharing): RADTTTS model conditioned on F0 and Energy with deterministic attribute predictors and trained on LJS. <br>
+We will soon provide more pre-trained RADTTS models with generative attribute predictors trained on LJS and LibriTTS. Stay tuned!
+
 
 ## Setup
 1. Clone this repo: `git clone https://github.com/NVIDIA/RADTTS.git`
 2. Install python requirements or build docker image
     - Install python requirements: `pip install -r requirements.txt`
 3. Update the filelists inside the filelists folder and json configs to point to your data
-4. Download the pre-trained HiFi-GAN model to perform vocoding and update HiFi-GAN paths in the json config files
 
 ## Training RADTTS (without pitch and energy conditioning)
 1. Train the decoder <br> 
@@ -32,14 +38,13 @@ We provide a link to a pre-trained HiFi-GAN model to perform vocoding.
 
 
 ## Training starting from a pre-trained model
-1. Download our published [RADTTS LJS] or [RADTTS LibriTTS] model
+1. Download our pre-trained model
 2. `python train.py -c config.json -p train_config.ignore_layers=["speaker_embedding.weight"] train_config.checkpoint_path=model_path.pt`
 
 ## Multi-GPU (distributed)
 1. `python -m torch.distributed.launch --use_env --nproc_per_node=NUM_GPUS_YOU_HAVE train.py -c config.json -p train_config.output_directory=outdir`
 
 ## Inference demo
-
 1. `python inference.py -c CONFIG_PATH -r RADTTS_PATH -v HG_PATH -k HG_CONFIG_PATH -t TEXT_PATH -s ljs --speaker_attributes ljs --speaker_text ljs -o results/`
 
 
