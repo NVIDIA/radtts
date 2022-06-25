@@ -22,7 +22,7 @@
         "use_amp": true,
         "grad_clip_val": 1.0,
         "loss_weights": {
-            "blank_logprob": -1, 
+            "blank_logprob": -1,
             "ctc_loss_weight": 0.1,
             "binarization_loss_weight": 1.0,
             "dur_loss_weight": 1.0,
@@ -77,7 +77,7 @@
         "include_speakers": null,
         "n_frames": -1,
         "betabinom_cache_path": "data_cache/",
-        "lmdb_cache_path": "", 
+        "lmdb_cache_path": "",
         "use_attn_prior_masking": true,
         "prepend_space_to_text": true,
         "append_space_to_text": true,
@@ -161,7 +161,7 @@
                     "n_layers": 2,
                     "n_channels": 256,
                     "kernel_size": 11,
-                    "p_dropout": 0.25
+                    "p_dropout": 0.5
                 }
             }
         },
