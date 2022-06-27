@@ -78,4 +78,4 @@ Rohan Badlani, Adrian Łańcucki, Kevin J. Shih, Rafael Valle, Wei Ping, Bryan C
 <br/><br/>
 Kevin J Shih, Rafael Valle, Rohan Badlani, Adrian Lancucki, Wei Ping, Bryan Catanzaro. <br/>[RAD-TTS: Parallel flow-based TTS with robust alignment learning and diverse synthesis.](https://openreview.net/pdf?id=0NQwnnwAORi)<br/> ICML Workshop on Invertible Neural Networks, Normalizing Flows, and Explicit Likelihood Models 2021
 <br/><br/>
-Kevin J Shih, Rafael Valle, Rohan Badlani, Jõao Felipe Santos, Bryan Catanzaro.<br/>[Generative Modeling for Low Dimensional Speech Attributes with Neural Spline Flows.](https://arxiv.org/pdf/2203.01786) Technical Report
+Kevin J Shih, Rafael Valle, Rohan Badlani, João Felipe Santos, Bryan Catanzaro.<br/>[Generative Modeling for Low Dimensional Speech Attributes with Neural Spline Flows.](https://arxiv.org/pdf/2203.01786) Technical Report
