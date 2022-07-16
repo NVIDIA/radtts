@@ -49,7 +49,7 @@ We will soon provide more pre-trained RADTTS models with generative attribute pr
 
 
 ## Inference Voice Conversion demo 
-1. `python inference_voice_conversion.py --radtts_path RADTTS_PATH --radtts_config_path RADTTS_CONFIG_PATH --vocoder_path HG_PATH --vocoder_config_path HG_CONFIG_PATH --f0_mean=211.413 --f0_std=46.6595 --energy_mean=0.724884 --energy_std=0.0564605 --output_dir_base=results/ -p data_config.validation_files="{'Dummy': {'basedir': 'data/', 'sampling_rate':'22khz', 'filelist': 'vc_audiopath_txt_speaker_emotion_duration_filelist.txt'}}"`
+1. `python inference_voice_conversion.py --radtts_path RADTTS_PATH --radtts_config_path RADTTS_CONFIG_PATH --vocoder_path HG_PATH --vocoder_config_path HG_CONFIG_PATH --f0_mean=211.413 --f0_std=46.6595 --energy_mean=0.724884 --energy_std=0.0564605 --output_dir=results/ -p data_config.validation_files="{'Dummy': {'basedir': 'data/', 'audiodir':'22khz', 'filelist': 'vc_audiopath_txt_speaker_emotion_duration_filelist.txt'}}"`
 
 ## LICENSE
 Unless otherwise specified, the source code within this repository is provided under the
