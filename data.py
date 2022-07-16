@@ -166,7 +166,7 @@ class Data(torch.utils.data.Dataset):
         dataset = []
         for dset_name, dset_dict in datasets.items():
             folder_path = dset_dict['basedir']
-            sampling_rate = dset_dict['sampling_rate']
+            audiodir = dset_dict['audiodir']
             filename = dset_dict['filelist']
             audio_lmdb_key = None
             if 'lmdbpath' in dset_dict.keys() and len(dset_dict['lmdbpath']) > 0:
@@ -175,7 +175,7 @@ class Data(torch.utils.data.Dataset):
                     lock=False).begin()
                 audio_lmdb_key = dset_name
 
-            wav_folder_prefix = os.path.join(folder_path, sampling_rate)
+            wav_folder_prefix = os.path.join(folder_path, audiodir)
             filelist_path = os.path.join(folder_path, filename)
             with open(filelist_path, encoding='utf-8') as f:
                 data = [line.strip().split(split) for line in f]
