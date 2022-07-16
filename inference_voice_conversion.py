@@ -159,7 +159,6 @@ def infer(radtts_path, radtts_config_path, vocoder_path,
 
             dur_target = outputs['attn'][0, 0].sum(0, keepdim=True)
 
-        padding = 20
         dur_target = (dur_target + 0.5).floor().int()
 
         with amp.autocast(use_amp):
@@ -174,7 +173,6 @@ def infer(radtts_path, radtts_config_path, vocoder_path,
                 if predict_features:
                     f0_is_invalid, energy_is_invalid = True, True
                     while f0_is_invalid or energy_is_invalid:
-                        dur_target[..., -1] += padding
                         model_output = radtts.infer(
                             speaker_ids, text, sigma, None, sigma_f0,
                             sigma_energy, dur=dur_target)
