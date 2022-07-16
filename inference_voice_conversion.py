@@ -24,7 +24,6 @@ import matplotlib.pylab as plt
 import os
 import argparse
 import json
-import glob
 import numpy as np
 
 from scipy.io.wavfile import write
@@ -41,9 +40,6 @@ from hifigan_models import Generator
 from hifigan_env import AttrDict
 from hifigan_denoiser import Denoiser
 from tqdm import tqdm
-
-
-CHECKPOINT_DIRS = ["models/"]
 
 
 def is_feature_invalid(x, max_val):
@@ -95,175 +91,152 @@ def load_vocoder(vocoder_path, config_path, to_cuda=True):
     return vocoder, denoiser
 
 
-def infer(vocoder_path, vocoder_config_path, n_samples, sigma,
-          use_amp, seed, output_dir_base, denoising_strength, params, shuffle,
-          takes, save_mels, no_audio, predict_features, sigma_f0=1.0,
-          sigma_energy=0.8, save_features=False, plot_features=False,
-          f0_mean=0.0, f0_std=0.0, energy_mean=0.0, energy_std=0.0):
+def infer(radtts_path, radtts_config_path, vocoder_path,
+          vocoder_config_path, n_samples, sigma, use_amp, seed, output_dir,
+          denoising_strength, params, shuffle, takes, save_mels, no_audio,
+          predict_features, sigma_f0=1.0, sigma_energy=0.8,
+          save_features=False, plot_features=False, f0_mean=0.0, f0_std=0.0,
+          energy_mean=0.0, energy_std=0.0):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
     ignore_keys = ['training_files', 'validation_files']
     vocoder, denoiser = load_vocoder(vocoder_path, vocoder_config_path)
 
-    for i in tqdm(range(len(CHECKPOINT_DIRS))):
-        checkpoint_dir = CHECKPOINT_DIRS[i]
-        if checkpoint_dir.startswith('#'):
-            continue
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
 
-        if os.path.isfile(checkpoint_dir):
-            checkpoint_path = checkpoint_dir
-        else:
-            checkpoint_paths = glob.glob(os.path.join(checkpoint_dir, "*model*"))
-            if len(checkpoint_paths):
-                checkpoint_paths = sorted([
-                    int(model_name.split('/')[-1].split('_')[-1])
-                    for model_name in checkpoint_paths])
-                checkpoint_path = os.path.join(
-                    checkpoint_dir, "model_" + str(checkpoint_paths[-1]))
-            else:
-                print("No model found in {}".format(checkpoint_dir))
-                break
+    model_config, data_config = get_configs(radtts_config_path, params)
 
-        config_path = os.path.join(
-            os.path.dirname(checkpoint_path), 'config.json')
-        output_dir = os.path.join(
-            output_dir_base,
-            os.path.basename(os.path.dirname(checkpoint_path)))
+    radtts = RADTTS(**model_config)
+    radtts.enable_inverse_cache() # cache inverse matrix for 1x1 invertible convs
+    print("Loading checkpoint '{}'" .format(radtts_path))
 
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
+    checkpoint_dict = torch.load(radtts_path, map_location='cpu')
+    state_dict = checkpoint_dict['state_dict']
 
-        model_config, data_config = get_configs(config_path, params)
+    radtts.load_state_dict(state_dict)
+    radtts.remove_norms()
+    radtts.eval()
+    radtts.cuda()
+    print("Loaded checkpoint '{}'" .format(radtts_path))
 
-        radtts = RADTTS(**model_config)
-        radtts.enable_inverse_cache() # cache inverse matrix for 1x1 invertible convs
-        print("Loading checkpoint '{}'" .format(checkpoint_path))
+    trainset = Data(
+        data_config['training_files'],
+        **dict((k, v) for k, v in data_config.items() if k not in ignore_keys))
 
-        checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
-        state_dict = checkpoint_dict['state_dict']
+    data_config['aug_probabilities'] = None
+    data_config['dur_max'] = 60
+    valset = Data(data_config['validation_files'],
+                  **dict((k, v) for k, v in data_config.items()
+                  if k not in ignore_keys),
+                  speaker_ids=trainset.speaker_ids)
+    collate_fn = DataCollate()
+    dataloader = DataLoader(valset, num_workers=1, shuffle=shuffle,
+                            sampler=None, batch_size=1,
+                            pin_memory=False, drop_last=False,
+                            collate_fn=collate_fn)
 
-        radtts.load_state_dict(state_dict)
-        radtts.remove_norms()
-        radtts.eval()
-        radtts.cuda()
-        print("Loaded checkpoint '{}'" .format(checkpoint_path))
+    f0_max = trainset.f0_max
+    energy_max = 1.0
+    for k, batch in enumerate(dataloader):
+        (mel, speaker_ids, text, in_lens, out_lens, attn_prior,
+            f0, voiced_mask, p_voiced, energy_avg,
+            audiopaths) = parse_data_from_batch(batch)
+        filename = os.path.splitext(
+            os.path.basename(batch['audiopaths'][0]))[0]
+        f0_gt, energy_avg_gt = f0.clone(), energy_avg.clone()
 
-        trainset = Data(
-            data_config['training_files'],
-            **dict((k, v) for k, v in data_config.items()
-                   if k not in ignore_keys))
+        suffix_path = "sid{}_sigma{}".format(speaker_ids.item(), sigma)
 
-        data_config['aug_probabilities'] = None
-        data_config['dur_max'] = 60
-        valset = Data(data_config['validation_files'],
-                      **dict((k, v) for k, v in data_config.items()
-                      if k not in ignore_keys),
-                      speaker_ids=trainset.speaker_ids)
-        collate_fn = DataCollate()
-        dataloader = DataLoader(valset, num_workers=1, shuffle=shuffle,
-                                sampler=None, batch_size=1,
-                                pin_memory=False, drop_last=False,
-                                collate_fn=collate_fn)
+        print("sample", k, filename)
+        with amp.autocast(use_amp):
+            # extract duration from attention using ground truth mel
+            outputs = radtts(
+                mel, speaker_ids, text, in_lens, out_lens, True,
+                attn_prior=attn_prior, f0=f0, energy_avg=energy_avg,
+                voiced_mask=voiced_mask, p_voiced=p_voiced)
 
-        f0_max = trainset.f0_max
-        energy_max = 1.0
-        for k, batch in enumerate(dataloader):
-            (mel, speaker_ids, text, in_lens, out_lens, attn_prior,
-             f0, voiced_mask, p_voiced, energy_avg,
-             audiopaths) = parse_data_from_batch(batch)
-            filename = os.path.splitext(
-                os.path.basename(batch['audiopaths'][0]))[0]
-            f0_gt, energy_avg_gt = f0.clone(), energy_avg.clone()
+            dur_target = outputs['attn'][0, 0].sum(0, keepdim=True)
 
-            suffix_path = "sid{}_sigma{}".format(speaker_ids.item(), sigma)
+        padding = 20
+        dur_target = (dur_target + 0.5).floor().int()
 
-            print("sample", k, filename)
-            with amp.autocast(use_amp):
-                # extract duration from attention using ground truth mel
-                outputs = radtts(
-                    mel, speaker_ids, text, in_lens, out_lens, True,
-                    attn_prior=attn_prior, f0=f0, energy_avg=energy_avg,
-                    voiced_mask=voiced_mask, p_voiced=p_voiced)
+        with amp.autocast(use_amp):
+            for j in tqdm(range(takes)):
+                audio_path = "{}/{}_{}_{}_denoised.wav".format(
+                        output_dir, filename, j, suffix_path)
 
-                dur_target = outputs['attn'][0, 0].sum(0, keepdim=True)
+                if os.path.exists(audio_path):
+                    print("skipping", audio_path)
+                    continue
 
-            padding = 20
-            dur_target = (dur_target + 0.5).floor().int()
-
-            with amp.autocast(use_amp):
-                for j in tqdm(range(takes)):
-                    audio_path = "{}/{}_{}_{}_denoised.wav".format(
-                            output_dir, filename, j, suffix_path)
-
-                    if os.path.exists(audio_path):
-                        print("skipping", audio_path)
-                        continue
-
-                    if predict_features:
-                        f0_is_invalid, energy_is_invalid = True, True
-                        while f0_is_invalid or energy_is_invalid:
-                            dur_target[..., -1] += padding
-                            model_output = radtts.infer(
-                                speaker_ids, text, sigma, None, sigma_f0,
-                                sigma_energy, dur=dur_target)
-                            f0 = model_output['f0']
-                            energy_avg = model_output['energy_avg']
-                            f0_is_invalid = is_feature_invalid(f0, f0_max)
-                            energy_is_invalid = is_feature_invalid(
-                                energy_avg, energy_max)
-                    else:
+                if predict_features:
+                    f0_is_invalid, energy_is_invalid = True, True
+                    while f0_is_invalid or energy_is_invalid:
+                        dur_target[..., -1] += padding
                         model_output = radtts.infer(
-                            speaker_ids, text, sigma, dur=dur_target, f0=f0,
-                            energy_avg=energy_avg, voiced_mask=voiced_mask,
-                            f0_mean=f0_mean, f0_std=f0_std,
-                            energy_mean=energy_mean, energy_std=energy_std)
+                            speaker_ids, text, sigma, None, sigma_f0,
+                            sigma_energy, dur=dur_target)
+                        f0 = model_output['f0']
+                        energy_avg = model_output['energy_avg']
+                        f0_is_invalid = is_feature_invalid(f0, f0_max)
+                        energy_is_invalid = is_feature_invalid(
+                            energy_avg, energy_max)
+                else:
+                    model_output = radtts.infer(
+                        speaker_ids, text, sigma, dur=dur_target, f0=f0,
+                        energy_avg=energy_avg, voiced_mask=voiced_mask,
+                        f0_mean=f0_mean, f0_std=f0_std,
+                        energy_mean=energy_mean, energy_std=energy_std)
 
-                    mel = model_output['mel']
+                mel = model_output['mel']
 
-                    if save_mels:
-                        np.save("{}/{}_{}_{}_mel".format(
-                            output_dir, filename, j, suffix_path),
-                            mel.cpu().numpy())
+                if save_mels:
+                    np.save("{}/{}_{}_{}_mel".format(
+                        output_dir, filename, j, suffix_path),
+                        mel.cpu().numpy())
 
-                    if not no_audio:
-                        audio = vocoder(mel).float()[0]
-                        audio_denoised = denoiser(
-                            audio, strength=denoising_strength)[0].float()
-                        audio = audio[0].cpu().numpy()
-                        audio_denoised = audio_denoised[0].cpu().numpy()
+                if not no_audio:
+                    audio = vocoder(mel).float()[0]
+                    audio_denoised = denoiser(
+                        audio, strength=denoising_strength)[0].float()
+                    audio = audio[0].cpu().numpy()
+                    audio_denoised = audio_denoised[0].cpu().numpy()
 
-                        write("{}/{}_{}_{}.wav".format(
-                              output_dir, filename, j, suffix_path),
-                              data_config['sampling_rate'], audio_denoised)
+                    write("{}/{}_{}_{}.wav".format(
+                        output_dir, filename, j, suffix_path),
+                        data_config['sampling_rate'], audio_denoised)
 
-                    if plot_features:
-                        fig, axes = plt.subplots(2, 1, figsize=(8, 3))
-                        axes[0].plot(f0_gt[0].cpu(), label='gt')
-                        axes[0].plot(f0[0].cpu(), label='pred')
-                        axes[1].plot(energy_avg_gt[0].cpu(), label='gt')
-                        axes[1].plot(energy_avg[0].cpu(), label='pred')
-                        plt.savefig("{}/{}_{}_{}.png".format(
-                            output_dir, filename, j, suffix_path))
-                        plt.close("all")
+                if plot_features:
+                    fig, axes = plt.subplots(2, 1, figsize=(8, 3))
+                    axes[0].plot(f0_gt[0].cpu(), label='gt')
+                    axes[0].plot(f0[0].cpu(), label='pred')
+                    axes[1].plot(energy_avg_gt[0].cpu(), label='gt')
+                    axes[1].plot(energy_avg[0].cpu(), label='pred')
+                    plt.savefig("{}/{}_{}_{}.png".format(
+                        output_dir, filename, j, suffix_path))
+                    plt.close("all")
 
-                    if save_features:
-                        mask = f0 < data_config['f0_min']
-                        f0[mask] = 0.0
-                        np.save("{}/{}_{}_{}_f0".format(
-                            output_dir, filename, j, suffix_path),
-                            f0.cpu().numpy())
+                if save_features:
+                    mask = f0 < data_config['f0_min']
+                    f0[mask] = 0.0
+                    np.save("{}/{}_{}_{}_f0".format(
+                        output_dir, filename, j, suffix_path),
+                        f0.cpu().numpy())
 
-                        np.save("{}/{}_{}_{}_energy".format(
-                            output_dir, filename, j, suffix_path),
-                            energy_avg.cpu().numpy())
+                    np.save("{}/{}_{}_{}_energy".format(
+                        output_dir, filename, j, suffix_path),
+                        energy_avg.cpu().numpy())
 
+        if k + 1 == n_samples:
+            break
 
-            if k + 1 == n_samples:
-                break
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--radtts_path', type=str)
+    parser.add_argument('-c', '--radtts_config_path', type=str, help='vocoder JSON file config')
     parser.add_argument('-v', '--vocoder_path', type=str)
     parser.add_argument('-k', '--vocoder_config_path', type=str, help='vocoder JSON file config')
     parser.add_argument('-p', '--params', nargs='+', default=[])
@@ -277,7 +250,7 @@ if __name__ == "__main__":
     parser.add_argument("--energy_std", default=0.0, type=float)
     parser.add_argument("--seed", default=1234, type=int)
     parser.add_argument("--use_amp", action="store_true")
-    parser.add_argument("-o", '--output_dir_base', type=str)
+    parser.add_argument("-o", '--output_dir', type=str)
     parser.add_argument("-d", "--denoising_strength", default=0.01, type=float)
     parser.add_argument("--shuffle", action="store_true")
     parser.add_argument("--save_mels", action="store_true")
@@ -292,14 +265,15 @@ if __name__ == "__main__":
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = False
 
-    if not os.path.exists(args.output_dir_base):
-        os.makedirs(args.output_dir_base)
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
     with torch.no_grad():
-        infer(args.vocoder_path, args.vocoder_config_path,
-              args.n_samples, args.sigma, args.use_amp, args.seed,
-              args.output_dir_base, args.denoising_strength, args.params,
-              args.shuffle, args.takes, args.save_mels, args.no_audio,
-              args.predict_features, args.sigma_f0, args.sigma_energy,
-              args.save_features, args.plot_features, args.f0_mean,
-              args.f0_std, args.energy_mean, args.energy_std)
+        infer(args.radtts_path, args.radtts_config_path, args.vocoder_path,
+              args.vocoder_config_path, args.n_samples, args.sigma,
+              args.use_amp, args.seed, args.output_dir,
+              args.denoising_strength, args.params, args.shuffle, args.takes,
+              args.save_mels, args.no_audio, args.predict_features,
+              args.sigma_f0, args.sigma_energy, args.save_features,
+              args.plot_features, args.f0_mean, args.f0_std, args.energy_mean,
+              args.energy_std)
