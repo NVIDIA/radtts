@@ -96,7 +96,7 @@ def infer(radtts_path, radtts_config_path, vocoder_path,
           denoising_strength, params, shuffle, takes, save_mels, no_audio,
           predict_features, sigma_f0=1.0, sigma_energy=0.8,
           save_features=False, plot_features=False, f0_mean=0.0, f0_std=0.0,
-          energy_mean=0.0, energy_std=0.0):
+          energy_mean=0.0, energy_std=0.0, filter_invalid=False):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
@@ -178,9 +178,12 @@ def infer(radtts_path, radtts_config_path, vocoder_path,
                             sigma_energy, dur=dur_target)
                         f0 = model_output['f0']
                         energy_avg = model_output['energy_avg']
-                        f0_is_invalid = is_feature_invalid(f0, f0_max)
-                        energy_is_invalid = is_feature_invalid(
-                            energy_avg, energy_max)
+                        if filter_invalid:
+                            f0_is_invalid = is_feature_invalid(f0, f0_max)
+                            energy_is_invalid = is_feature_invalid(
+                                energy_avg, energy_max)
+                        else:
+                            f0_is_invalid, energy_is_invalid = False, False
                 else:
                     model_output = radtts.infer(
                         speaker_ids, text, sigma, dur=dur_target, f0=f0,
@@ -256,6 +259,7 @@ if __name__ == "__main__":
     parser.add_argument("--predict_features", action="store_true")
     parser.add_argument("--save_features", action="store_true")
     parser.add_argument("--plot_features", action="store_true")
+    parser.add_argument("--filter_invalid", action="store_true")
     parser.add_argument('-t', '--takes', default=1, type=int)
 
     args = parser.parse_args()
@@ -274,4 +278,4 @@ if __name__ == "__main__":
               args.save_mels, args.no_audio, args.predict_features,
               args.sigma_f0, args.sigma_energy, args.save_features,
               args.plot_features, args.f0_mean, args.f0_std, args.energy_mean,
-              args.energy_std)
+              args.energy_std, args.filter_invalid)
