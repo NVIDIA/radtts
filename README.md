@@ -37,9 +37,9 @@ We will soon provide more pre-trained RADTTS models with generative attribute pr
     `python train.py -c config_ljs_{agap,bgap,dap}.json -p train_config.output_directory=outdir_wattr train_config.warmstart_checkpoint_path=model_path.pt`
 
 
-## Training starting from a pre-trained model
+## Training starting from a pre-trained model, ignoring the speaker embedding table
 1. Download our pre-trained model
-2. `python train.py -c config.json -p train_config.ignore_layers=["speaker_embedding.weight"] train_config.checkpoint_path=model_path.pt`
+2. `python train.py -c config.json -p train_config.ignore_layers_warmstart=["speaker_embedding.weight"] train_config.warmstart_checkpoint_path=model_path.pt`
 
 ## Multi-GPU (distributed)
 1. `python -m torch.distributed.launch --use_env --nproc_per_node=NUM_GPUS_YOU_HAVE train.py -c config.json -p train_config.output_directory=outdir`
