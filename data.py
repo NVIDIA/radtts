@@ -179,15 +179,18 @@ class Data(torch.utils.data.Dataset):
             filelist_path = os.path.join(folder_path, filename)
             with open(filelist_path, encoding='utf-8') as f:
                 data = [line.strip().split(split) for line in f]
+
             for d in data:
+                emotion = 'other' if len(d) == 3 else d[3]
+                duration = -1 if len(d) == 3 else d[4]
                 dataset.append(
                     {'audiopath': os.path.join(wav_folder_prefix, d[0]),
                      'text': d[1],
-                     'speaker': d[2] + '-' + d[3] if self.combine_speaker_and_emotion else d[2],
-                     'emotion': d[3],
-                     'duration': float(d[4]),
+                     'speaker': d[2] + '-' + emotion if self.combine_speaker_and_emotion else d[2],
+                     'emotion': emotion,
+                     'duration': float(duration),
                      'lmdb_key': audio_lmdb_key
-                    })
+                     })
         return dataset
 
     def filter_by_speakers_(self, speakers, include=True):
@@ -198,8 +201,10 @@ class Data(torch.utils.data.Dataset):
             self.data = [x for x in self.data if x['speaker'] not in speakers]
 
     def filter_by_duration_(self, dur_min, dur_max):
-        self.data = [x for x in self.data
-                     if x['duration'] >= dur_min and x['duration'] <= dur_max]
+        self.data = [
+            x for x in self.data
+            if x['duration'] == -1 or (
+                x['duration'] >= dur_min and x['duration'] <= dur_max)]
 
     def create_speaker_lookup_table(self, data):
         speaker_ids = np.sort(np.unique([x['speaker'] for x in data]))
