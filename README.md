@@ -13,7 +13,11 @@ We provide a [checkpoint](https://drive.google.com/file/d/1lD62jl5hF6T5AkGoWKOcg
 For a HiFi-GAN vocoder trained on LJS, please download the v1 model provided by the HiFi-GAN authors [here](https://github.com/jik876/hifi-gan), .
 
 ## RADTTS pre-trained models
-[RADTTS++DAP-LJS](https://drive.google.com/file/d/1Rb2VMUwQahGrnpFSlAhCPh7OpDN3xgOr/view?usp=sharing): RADTTTS model conditioned on F0 and Energy with deterministic attribute predictors and trained on LJS. <br>
+| Model name                | Description                                             | Dataset                                      | 
+|---------------------------|---------------------------------------------------------|----------------------------------------------|
+| [RADTTS++DAP-LJS](https://drive.google.com/file/d/1Rb2VMUwQahGrnpFSlAhCPh7OpDN3xgOr/view?usp=sharing) | RADTTTS model conditioned on F0 and Energy with deterministic attribute predictors | LJSpeech Dataset 
+
+
 We will soon provide more pre-trained RADTTS models with generative attribute predictors trained on LJS and LibriTTS. Stay tuned!
 
 
@@ -50,6 +54,16 @@ We will soon provide more pre-trained RADTTS models with generative attribute pr
 
 ## Inference Voice Conversion demo 
 1. `python inference_voice_conversion.py --radtts_path RADTTS_PATH --radtts_config_path RADTTS_CONFIG_PATH --vocoder_path HG_PATH --vocoder_config_path HG_CONFIG_PATH --f0_mean=211.413 --f0_std=46.6595 --energy_mean=0.724884 --energy_std=0.0564605 --output_dir=results/ -p data_config.validation_files="{'Dummy': {'basedir': 'data/', 'audiodir':'22khz', 'filelist': 'vc_audiopath_txt_speaker_emotion_duration_filelist.txt'}}"`
+
+## Config Files
+| Filename                 | Description                                             | Nota bene                                      |
+|--------------------------|---------------------------------------------------------|------------------------------------------------|
+| [config\_ljs_decoder.json] (https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_decoder.json) | Config for the decoder conditioned on F0 and Energy     |                                                |
+| [config\_ljs_radtts.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_radtts.json)    | Config for the decoder not conditioned on F0 and Energy |                                                |
+| [config\_ljs_agap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_agap.json)        | Config for the Autoregressive Flow Attribute Predictors | Requires at least pre-trained alignment module |
+| [config\_ljs_bgap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_bgap.json)        | Config for the Bi-Partite Flow Attribute Predictors     | Requires at least pre-trained alignment module |
+| [config\_ljs_dap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_dap.json)          | Config for the Deterministic Attribute Predictors       | Requires at least pre-trained alignment module |
+
 
 ## LICENSE
 Unless otherwise specified, the source code within this repository is provided under the
