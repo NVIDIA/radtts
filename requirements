@@ -1,8 +1,0 @@
-matplotlib==2.1.0
-numpy==1.13.3
-inflect==0.2.5
-librosa==0.8.0
-scipy==1.0.0
-Unidecode==1.0.22
-pillow
-git+https://github.com/jfsantos/maracas@master#egg=maracas

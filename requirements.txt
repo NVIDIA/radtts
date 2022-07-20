@@ -1,0 +1,17 @@
+librosa==0.8.0 
+soundfile 
+audioread 
+sox 
+matplotlib 
+Pillow 
+inflect 
+unidecode 
+natsort 
+pandas 
+jupyter 
+tgt 
+srt 
+peakutils 
+webrtcvad 
+torchaudio
+git+https://github.com/jfsantos/maracas@master#egg=maracas
