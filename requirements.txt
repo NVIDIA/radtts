@@ -13,5 +13,6 @@ tgt
 srt 
 peakutils 
 webrtcvad 
+torch
 torchaudio
 git+https://github.com/jfsantos/maracas@master#egg=maracas
