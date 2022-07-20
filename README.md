@@ -58,11 +58,11 @@ We will soon provide more pre-trained RADTTS models with generative attribute pr
 ## Config Files
 | Filename                 | Description                                             | Nota bene                                      |
 |--------------------------|---------------------------------------------------------|------------------------------------------------|
-| [config\_ljs_decoder.json] (https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_decoder.json) | Config for the decoder conditioned on F0 and Energy     |                                                |
-| [config\_ljs_radtts.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_radtts.json)    | Config for the decoder not conditioned on F0 and Energy |                                                |
-| [config\_ljs_agap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_agap.json)        | Config for the Autoregressive Flow Attribute Predictors | Requires at least pre-trained alignment module |
-| [config\_ljs_bgap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_bgap.json)        | Config for the Bi-Partite Flow Attribute Predictors     | Requires at least pre-trained alignment module |
-| [config\_ljs_dap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_dap.json)          | Config for the Deterministic Attribute Predictors       | Requires at least pre-trained alignment module |
+| [config\_ljs_decoder.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_decoder.json) | Config for the decoder conditioned on F0 and Energy     |                                                |
+| [config\_ljs_radtts.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_radtts.json)   | Config for the decoder not conditioned on F0 and Energy |                                                |
+| [config\_ljs_agap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_agap.json)       | Config for the Autoregressive Flow Attribute Predictors | Requires at least pre-trained alignment module |
+| [config\_ljs_bgap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_bgap.json)       | Config for the Bi-Partite Flow Attribute Predictors     | Requires at least pre-trained alignment module |
+| [config\_ljs_dap.json](https://github.com/NVIDIA/radtts/blob/main/configs/config_ljs_dap.json)         | Config for the Deterministic Attribute Predictors       | Requires at least pre-trained alignment module |
 
 
 ## LICENSE
