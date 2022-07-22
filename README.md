@@ -26,12 +26,14 @@ We will soon provide more pre-trained RADTTS models with generative attribute pr
 2. Install python requirements or build docker image
     - Install python requirements: `pip install -r requirements.txt`
 3. Update the filelists inside the filelists folder and json configs to point to your data
-
+    - `basedir` – the folder containing the filelists and the audiodir
+    - `audiodir` – name of the audiodir
+    - `filelist` – <mark>|</mark> (pipe) separated text file with relative audiopath, text, speaker, and optionally categorical label and audio duration in seconds
 ## Training RADTTS (without pitch and energy conditioning)
 1. Train the decoder <br> 
 	`python train.py -c config_ljs_radtts.json -p train_config.output_directory=outdir`
 2. Further train with the duration predictor
-	`python train.py -c config_ljs_radtts.json -p train_config.output_directory=outdir_wdur train_config.warmstart_checkpoint_path=model_path.pt model_config.include_modules="decatndur"`
+	`python train.py -c config_ljs_radtts.json -p train_config.output_directory=outdir_dir train_config.warmstart_checkpoint_path=model_path.pt model_config.include_modules="decatndur"`
 
 
 ## Training RADTTS++ (with pitch and energy conditioning)
