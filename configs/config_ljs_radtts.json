@@ -37,17 +37,17 @@
     "data_config": {
         "training_files": {
             "LJS": {
-                "basedir": "/path_to_ljs/",
+                "basedir": "filelists/",
                 "audiodir": "wavs",
-                "filelist": "ljs_audiopath_text_sid_emotion_duration_train_filelist.txt",
+                "filelist": "ljs_audiopath_text_speaker_train_filelist.txt",
                 "lmdbpath": ""
             }
         },
         "validation_files": {
             "LJS": {
-                "basedir": "/path_to_ljs/",
+                "basedir": "filelists/",
                 "audiodir": "wavs",
-                "filelist": "ljs_audiopath_text_sid_emotion_duration_val_filelist.txt",
+                "filelist": "ljs_audiopath_text_speaker_val_filelist.txt",
                 "lmdbpath": ""
             }
         },
