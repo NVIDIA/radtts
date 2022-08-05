@@ -839,7 +839,6 @@ class ConvAttention(torch.nn.Module):
         self.temperature = temperature
         self.softmax = torch.nn.Softmax(dim=3)
         self.log_softmax = torch.nn.LogSoftmax(dim=3)
-        self.query_proj = Invertible1x1ConvLUS(n_mel_channels)
 
         self.key_proj = nn.Sequential(
             ConvNorm(n_text_channels, n_text_channels*2, kernel_size=3,
